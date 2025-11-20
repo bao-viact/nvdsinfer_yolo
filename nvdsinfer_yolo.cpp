@@ -161,7 +161,10 @@ bool NvDsInferYoloNMS (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
 
     if (p_keep_count[0] > 0)
     {
-        assert (!(max_bbox < 2.0));
+        // assert (!(max_bbox < 2.0));
+        if (max_bbox < 2.0) {
+            return true;
+        }
         for (int i = 0; i < p_keep_count[0]; i++) {
 
             if ( p_scores[i] < threshold) continue;
@@ -169,7 +172,10 @@ bool NvDsInferYoloNMS (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
                 printf("Error: The number of classes configured in the GIE config-file (postprocess > num_detected_classes) is incorrect.\n");
                 printf("Detected class index: %u\n", (unsigned int) p_classes[i]);
             }
-            assert((unsigned int) p_classes[i] < detectionParams.numClassesConfigured);
+            // assert((unsigned int) p_classes[i] < detectionParams.numClassesConfigured);
+            if ((unsigned int) p_classes[i] >= detectionParams.numClassesConfigured) {
+                continue; 
+            }
 
             NvDsInferObjectDetectionInfo object;
             object.classId = (int) p_classes[i];
@@ -180,7 +186,7 @@ bool NvDsInferYoloNMS (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
             object.width=(p_bboxes[4*i+2] - object.left);
             object.height= (p_bboxes[4*i+3] - object.top);
 
-            if(log_enable != NULL && std::stoi(log_enable)) {
+/*             if(log_enable != NULL && std::stoi(log_enable)) {
                 std::cout << "idx/label/conf/ x/y w/h -- ";
                 if (hasIndicesLayer) { 
                     std::cout << p_indices[i] << " ";
@@ -194,7 +200,7 @@ bool NvDsInferYoloNMS (std::vector<NvDsInferLayerInfo> const &outputLayersInfo,
                     << object.left << " " << object.top << " " << object.width << " " << object.height
                     << std::endl;
             }
-
+ */
             object.left=CLIP(object.left, 0, networkInfo.width - 1);
             object.top=CLIP(object.top, 0, networkInfo.height - 1);
             object.width=CLIP(object.width, 0, networkInfo.width - 1);
@@ -301,9 +307,10 @@ extern "C" bool NvDsInferYoloMask(
     
     const int mask_resolution = sqrt(masksLayer->inferDims.d[1]);
 
-    if(log_enable != NULL && std::stoi(log_enable)) {
+/*     if(log_enable != NULL && std::stoi(log_enable)) {
         std::cout << "keep cout: " << p_keep_count[0] << std::endl;
     }
+*/
 
     float max_bbox=0;
     for (int i=0; i < numElements_p_bboxes; i++){
@@ -312,9 +319,12 @@ extern "C" bool NvDsInferYoloMask(
     }
 
     if (p_keep_count[0] > 0){
-        assert (!(max_bbox < 2.0));
+        // assert (!(max_bbox < 2.0));
+        if (max_bbox < 2.0) {
+            return true;
+        }       
 
-       for (int i = 0; i < p_keep_count[0]; i++) {
+        for (int i = 0; i < p_keep_count[0]; i++) {
            
             if ( p_scores[i] < threshold) continue;
 
@@ -323,8 +333,11 @@ extern "C" bool NvDsInferYoloMask(
                 printf("Detected class index: %u\n", (unsigned int) p_classes[i]);
                 continue;
             }
-            //assert((unsigned int) p_classes[i] < detectionParams.numClassesConfigured);
-            
+            // assert((unsigned int) p_classes[i] < detectionParams.numClassesConfigured);
+            if ((unsigned int) p_classes[i] >= detectionParams.numClassesConfigured) {
+                continue; 
+            }
+
             NvDsInferInstanceMaskInfo object;
             object.classId = (int) p_classes[i];
             object.detectionConfidence = p_scores[i];
@@ -334,13 +347,14 @@ extern "C" bool NvDsInferYoloMask(
             object.width=(p_bboxes[4*i+2] - object.left);
             object.height= (p_bboxes[4*i+3] - object.top);
 
-            if (log_enable != NULL && std::stoi(log_enable)) {
+/*             if (log_enable != NULL && std::stoi(log_enable)) {
                 std::cout << "label/conf/ x/y w/h -- "
                 << p_classes[i] << " "
                 << p_scores[i] << " "
                 << object.left << " " << object.top << " " << object.width << " "<< object.height << " "
                 << std::endl;
-            }
+            } 
+*/
 
             object.left=CLIP(object.left, 0, networkInfo.width - 1);
             object.top=CLIP(object.top, 0, networkInfo.height - 1);
